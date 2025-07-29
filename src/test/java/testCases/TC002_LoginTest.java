@@ -8,7 +8,7 @@ import pageObjects.MyAccountPage;
 import testBase.BaseClass;
 
 public class TC002_LoginTest extends BaseClass {
-    @Test(groups = {"Sanity", "Master"})
+    @Test(groups = {"Sanity", "Master"}, description = "Verifies valid login to user account")
     public void verify_login() {
         logger.info("****** Starting TC002_LoginTest ******");
         try {
@@ -17,16 +17,24 @@ public class TC002_LoginTest extends BaseClass {
             homePage.clickLogin();
 
             LoginPage loginPage = new LoginPage(driver);
-            loginPage.setEmailAddress(prop.getProperty("email"));
-            loginPage.setPassword(prop.getProperty("password"));
+            String email = prop.getProperty("email");
+            String password = prop.getProperty("password");
+            loginPage.setEmailAddress(email);
+            logger.info("Entered Email: {}", email);
+            loginPage.setPassword(password);
+            logger.info("Entered password");
             loginPage.clickLogin();
+            logger.info("Clicked on Login button");
+
 
             MyAccountPage myAccountPage = new MyAccountPage(driver);
-            boolean targetPage = myAccountPage.isMyAccountPageExists();
-            Assert.assertTrue(targetPage);
+            boolean isMyAccountPageDisplayed = myAccountPage.isMyAccountPageExists();
+            Assert.assertTrue(isMyAccountPageDisplayed, "Login Failed: My Account page not found");
+            logger.info("Login successful. My Account page displayed.");
 //        Assert.assertEquals(targetPage,true,"Test Failed");
         } catch (Exception e) {
-            Assert.fail();
+            logger.error("Exception occured during login test: {}", e.getMessage(), e);
+            Assert.fail("Login test failed due to exception: " + e.getMessage());
         }
         logger.info("****** Finished TC002_LoginTest ******");
     }

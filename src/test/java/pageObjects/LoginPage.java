@@ -18,14 +18,17 @@ public class LoginPage extends BasePage {
     WebElement btnLogin;
 
     public void setEmailAddress(String email) {
-        txtEmailAddress.sendKeys(email);
+        logger.info("Setting email address");
+        safeSendKeys(txtEmailAddress, email);
     }
 
     public void setPassword(String password) {
-        txtPassword.sendKeys(password);
+        logger.info("Setting password");
+        safeSendKeys(txtPassword, password);
     }
 
     public void clickLogin() {
-        btnLogin.click();
+        logger.info("clicking on login button");
+        safeClick(btnLogin);
     }
 }

@@ -9,18 +9,27 @@ import pageObjects.MyAccountPage;
 import testBase.BaseClass;
 
 public class TC003_LoginDDT extends BaseClass {
-    @Test(dataProvider = "LoginData", dataProviderClass = DataProviders.class, groups = "DataProviderTest")
+    @Test(dataProvider = "LoginData", dataProviderClass = DataProviders.class, groups = "DataProviderTest",
+            description = "Data-driven test to verify login with multiple credential sets")
     public void verify_loginDDT(String userName, String password, String exp) {
-        logger.info("****** Starting TC003_LoginDDT ******");
+        logger.info("****** Starting TC003_LoginDDT for user: {} ******", userName);
         try {
             HomePage homePage = new HomePage(driver);
             homePage.clickMyAccount();
+            logger.info("Clicked 'My Account'");
+
             homePage.clickLogin();
+            logger.info("Clicked 'Login'");
 
             LoginPage loginPage = new LoginPage(driver);
             loginPage.setEmailAddress(userName);
+            logger.info("Entered username: {}", userName);
+
             loginPage.setPassword(password);
+            logger.info("Entered password (hidden)");
+
             loginPage.clickLogin();
+            logger.info("Clicked Login button");
 
             MyAccountPage myAccountPage = new MyAccountPage(driver);
             boolean targetPage = myAccountPage.isMyAccountPageExists();
@@ -32,24 +41,39 @@ public class TC003_LoginDDT extends BaseClass {
             //                 login failed - test pass
 
             if (exp.equalsIgnoreCase("valid")) {
-                if (targetPage == true) {
-                    myAccountPage.clickLogout();
-                    Assert.assertTrue(true);
-                } else {
-                    Assert.assertTrue(false);
-                }
+                Assert.assertTrue(targetPage, "Login failed for valid credentials: " + userName);
+                logger.info("Login successful for user: {}", userName);
+                myAccountPage.clickLogout();
+                logger.info("Logged out successfully");
+
+//                if (targetPage == true) {
+//                    myAccountPage.clickLogout();
+//                    Assert.assertTrue(true);
+//                } else {
+//                    Assert.assertTrue(false);
+//                }
+
             } else if (exp.equalsIgnoreCase("invalid")) {
-                if (targetPage == true) {
-                    myAccountPage.clickLogout();
-                    Assert.assertTrue(false);
-                } else {
-                    Assert.assertTrue(true);
-                }
+                Assert.assertFalse(targetPage, "Login succeeded for invalid credentials: " + userName);
+                logger.info("Login failed as expected for invalid user: {}", userName);
+
+//                if (targetPage == true) {
+//                    myAccountPage.clickLogout();
+//                    Assert.assertTrue(false);
+//                } else {
+//                    Assert.assertTrue(true);
+//                }
+
+            }
+            else {
+                logger.warn("Unexpected 'exp' value: {}", exp);
+                Assert.fail("Invalid expected result value: " + exp);
             }
         } catch (Exception e) {
-            Assert.fail();
+            logger.error("Exception in verify_loginDDT for user: {}", userName, e);
+            Assert.fail("Test failed due to exception: " + e.getMessage());
         }
 
-        logger.info("****** Finished TC003_LoginDDT ******");
+        logger.info("****** Finished TC003_LoginDDT for user: {} ******", userName);
     }
 }

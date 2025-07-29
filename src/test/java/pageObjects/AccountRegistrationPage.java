@@ -29,36 +29,45 @@ public class AccountRegistrationPage extends BasePage {
     WebElement msgConfirmation;
 
     public void setFirstName(String fname) {
-        txtFirstName.sendKeys(fname);
+        logger.info("Setting first name: {}", fname);
+        safeSendKeys(txtFirstName, fname);
     }
 
     public void setLastName(String lname) {
-        txtLastName.sendKeys(lname);
+        logger.info("Setting last name: {}", lname);
+        safeSendKeys(txtLastName, lname);
     }
 
     public void setEmail(String email) {
-        txtEmail.sendKeys(email);
+        logger.info("Setting email: {}", email);
+        safeSendKeys(txtEmail, email);
     }
 
-    public void setTelePhone(String telephone) {
-        txtTelephone.sendKeys(telephone);
+    public void setTelephone(String telephone) {
+        logger.info("Setting telephone: {}" + telephone);
+        safeSendKeys(txtTelephone, telephone);
     }
 
     public void setPassword(String pwd) {
-        txtPassword.sendKeys(pwd);
+        logger.info("Setting password.");
+        safeSendKeys(txtPassword, pwd);
     }
 
     public void setConfirmPasssword(String pwd) {
-        txtConfirmPassword.sendKeys(pwd);
+        logger.info("Confirming password.");
+        safeSendKeys(txtConfirmPassword, pwd);
     }
 
     public void checkPolicy() {
-        chkdPolicy.click();
+        logger.info("Checking policy aggrement checkbox");
+        safeClick(chkdPolicy);
     }
 
     public void clickContinue() {
         //Sol1
-        btnContinue.click();
+        logger.info("Clicking continue button");
+        safeClick(btnContinue);
+
         //sol2
         //btnContinue.submit();
         //sol3
@@ -76,9 +85,13 @@ public class AccountRegistrationPage extends BasePage {
 
     public String getConfirmationMessage() {
         try {
-            return (msgConfirmation.getText());
+            waitForVisibility(msgConfirmation);
+            String message = msgConfirmation.getText();
+            logger.info("Confirmation message: {}", message);
+            return message;
         } catch (Exception e) {
-            return (e.getMessage());
+            logger.error("Failed to get confirmation message.", e);
+            return null;
         }
     }
 

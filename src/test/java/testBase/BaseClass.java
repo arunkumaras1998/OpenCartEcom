@@ -1,5 +1,6 @@
 package testBase;
 
+import io.github.bonigarcia.wdm.WebDriverManager;
 import org.apache.commons.lang3.RandomStringUtils;
 
 
@@ -17,9 +18,10 @@ import org.apache.logging.log4j.LogManager; //log4j
 import org.testng.annotations.Parameters;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.util.Date;
@@ -35,29 +37,30 @@ public class BaseClass {
     public void setUp(String os, String br) throws IOException {
 
         // Loading config.properties file
-        FileReader reader = new FileReader(System.getProperty("user.dir") + "\\src\\test\\resources\\config.properties");
-//                + File.separator + "src"
-//                + File.separator + "test"
-//                + File.separator + "resources"
-//                + File.separator + "config.properties");
+        String configPath = System.getProperty("user.dir") + File.separator + "src" + File.separator + "test" + File.separator + "resources" + File.separator + "config.properties";
+        FileReader reader = new FileReader(configPath);
         prop = new Properties();
         prop.load(reader);
 
-        // Specified the Logger to setUp() method
+        // Initialize Logger
         logger = LogManager.getLogger(this.getClass());
 
+        // Browser initialization
         switch (br.toLowerCase()) {
             case "chrome":
+                WebDriverManager.chromedriver().setup();
                 driver = new ChromeDriver();
                 break;
             case "edge":
+                WebDriverManager.edgedriver().setup();
                 driver = new EdgeDriver();
                 break;
             case "firefox":
+                WebDriverManager.firefoxdriver().setup();
                 driver = new FirefoxDriver();
                 break;
             default:
-                System.out.println("Invalid Browser Name..........");
+                throw new IllegalArgumentException("Unsupported browser: " + br);
 
         }
         driver.manage().deleteAllCookies();
@@ -68,35 +71,51 @@ public class BaseClass {
 
     @AfterClass(alwaysRun = true)
     public void tearDown() {
-        driver.close();
+        try {
+            if (driver != null) {
+                driver.quit(); // close all windows and safely end session
+            }
+        } catch (Exception e) {
+            logger.warn("Exception while quiting browser: {}", e.getMessage(), e);
+        }
     }
 
     public String randomString() {
-        String generatedString = RandomStringUtils.randomAlphabetic(8);
-        return generatedString;
+        return RandomStringUtils.randomAlphabetic(8);
     }
 
     public String randomNumber() {
-        String generatedNumber = RandomStringUtils.randomNumeric(10);
-        return generatedNumber;
+        return RandomStringUtils.randomNumeric(10);
     }
 
-    public String generateAlphaNumberic() {
-        String generatedString = RandomStringUtils.randomAlphabetic(3);
-        String generatedNumber = RandomStringUtils.randomNumeric(3);
-        return (generatedString + "$@" + generatedNumber);
+    public String generateAlphaNumeric() {
+        String alpha = RandomStringUtils.randomAlphabetic(3);
+        String num = RandomStringUtils.randomNumeric(3);
+        return (alpha + "$@" + num);
+    }
+
+    public String userDefinedRandomString(int length) {
+        return RandomStringUtils.randomAlphabetic(length);
     }
 
     public String captureScreenshot(String testName) {
-        String timeStamp = new SimpleDateFormat("yyyy.DD.mm.HH.mm.ss").format(new Date());
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        String targetFilePath = System.getProperty("user.dir") + File.separator
+                + "screenshots" + File.separator
+                + testName + "_" + timeStamp + ".png";
 
         TakesScreenshot takesScreenshot = (TakesScreenshot) driver;
         File sourceFile = takesScreenshot.getScreenshotAs(OutputType.FILE);
-        String targetFilePath = System.getProperty("user.dir") + "\\screenshots\\" + testName + "_" + timeStamp + ".png";
         File targetFile = new File(targetFilePath);
 
         // below code is coping sourceFile to targetFilePath
-        sourceFile.renameTo(targetFile);
+        try {
+            Files.createDirectories(targetFile.getParentFile().toPath()); // to ensure folder is existing
+            Files.copy(sourceFile.toPath(), targetFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            logger.info("Screenshot saved: {}", targetFilePath);
+        } catch (IOException e) {
+            logger.error("Failed to save screenshot: " + e.getMessage(), e);
+        }
         return targetFilePath;
     }
 }

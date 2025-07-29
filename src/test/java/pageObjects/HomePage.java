@@ -17,14 +17,17 @@ public class HomePage extends BasePage {
     WebElement lnkLogin;
 
     public void clickMyAccount() {
-        lnkMyAccount.click();
+        logger.info("Clicking on 'My Account' link");
+        safeClick(lnkMyAccount);
     }
 
     public void clickRegister() {
-        lnkRegister.click();
+        logger.info("Clicking on 'register' link");
+        safeClick(lnkRegister);
     }
 
-    public void clickLogin(){
-        lnkLogin.click();
+    public void clickLogin() {
+        logger.info("Clicking on 'login' link");
+        safeClick(lnkLogin);
     }
 }

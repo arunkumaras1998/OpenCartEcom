@@ -3,6 +3,7 @@ package pageObjects;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.FindBy;
+import org.testng.Assert;
 
 public class MyAccountPage extends BasePage {
     public MyAccountPage(WebDriver driver) {
@@ -16,13 +17,18 @@ public class MyAccountPage extends BasePage {
 
     public boolean isMyAccountPageExists() {
         try {
-            return msgHeading.isDisplayed();
+            waitForVisibility(msgHeading);
+            boolean headingFlag = msgHeading.isDisplayed();
+            logger.info("Message heading is displayed...");
+            return headingFlag;
         } catch (Exception e) {
+            logger.error("Failed to get message heading.", e);
             return false;
         }
     }
 
     public void clickLogout() {
-        btnLogout.click();
+        logger.info("Clicking on the logout button.");
+        safeClick(btnLogout);
     }
 }

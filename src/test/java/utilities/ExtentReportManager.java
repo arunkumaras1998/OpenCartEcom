@@ -21,7 +21,7 @@ public class ExtentReportManager implements ITestListener {
     public ExtentSparkReporter sparkReporter;
     public ExtentReports extent;
     public ExtentTest test;
-    String repName;
+    private String reportName;
 
     @Override
     public void onStart(ITestContext context) {
@@ -32,8 +32,9 @@ public class ExtentReportManager implements ITestListener {
         */
         // instead of using above we can optimize in one line
         String timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());// time stamp
-        repName = "Test-Report-" + timeStamp + ".html";
-        sparkReporter = new ExtentSparkReporter(System.getProperty("user.dir") + "\\reports\\" + repName); // specified the location of the report
+        reportName = "Test-Report-" + timeStamp + ".html";
+        String reportPath = System.getProperty("user.dir") + File.separator + "reports" + File.separator + reportName;
+        sparkReporter = new ExtentSparkReporter(reportPath); // specified the location of the report
         sparkReporter.config().setDocumentTitle("Opencart Automation Report"); // Title of the report
         sparkReporter.config().setReportName("opencart Functional Testing"); // Name of the report
         sparkReporter.config().setTheme(Theme.DARK);
@@ -46,14 +47,11 @@ public class ExtentReportManager implements ITestListener {
         extent.setSystemInfo("User Name", System.getProperty("user.name"));
         extent.setSystemInfo("Environment", "QA");
 
-        // We can get the os and browser name from the xml file where we defined using parameter annotation
-        String os = context.getCurrentXmlTest().getParameter("os");
-        extent.setSystemInfo("Operating System", os);
+        // We can get the os and browser name from TestNG XML file where we defined using parameter annotation
+        extent.setSystemInfo("Operating System", context.getCurrentXmlTest().getParameter("os"));
+        extent.setSystemInfo("Browser", context.getCurrentXmlTest().getParameter("browser"));
 
-        String browser = context.getCurrentXmlTest().getParameter("browser");
-        extent.setSystemInfo("Browser", browser);
-
-        // get the groups name which are you provided in xml file
+        // get the groups name which are you provided in TestNG XML file
         List<String> includedGroups = context.getCurrentXmlTest().getIncludedGroups();
         if (!includedGroups.isEmpty()) {
             extent.setSystemInfo("Groups", includedGroups.toString());
@@ -62,21 +60,17 @@ public class ExtentReportManager implements ITestListener {
 
     @Override
     public void onTestSuccess(ITestResult result) {
-        test = extent.createTest(result.getTestClass().getName());
-        test.assignCategory(result.getMethod().getGroups()); // To display the groups in the report
-        test.log(Status.PASS, result.getName() + " got successfully executed");
+        logResult(result, Status.PASS, result.getName() + " executed successfully");
 
     }
 
     @Override
     public void onTestFailure(ITestResult result) {
-        test = extent.createTest(result.getTestClass().getName());
-        test.assignCategory(result.getMethod().getGroups());
-        test.log(Status.FAIL, result.getName() + " got Failed");
+        logResult(result, Status.FAIL, result.getName() + " failed.");
         test.log(Status.INFO, result.getThrowable().getMessage());
         try {
-            String impPath = new BaseClass().captureScreenshot(result.getName());
-            test.addScreenCaptureFromPath(impPath);
+            String screenshotPath = new BaseClass().captureScreenshot(result.getName());
+            test.addScreenCaptureFromPath(screenshotPath);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -85,10 +79,16 @@ public class ExtentReportManager implements ITestListener {
 
     @Override
     public void onTestSkipped(ITestResult result) {
+        logResult(result, Status.SKIP, result.getName() + " was skipped");
+        if (result.getThrowable() != null) {
+            test.log(Status.INFO, result.getThrowable().getMessage());
+        }
+    }
+
+    private void logResult(ITestResult result, Status status, String message) {
         test = extent.createTest(result.getTestClass().getName());
-        test.assignCategory(result.getMethod().getGroups());
-        test.log(Status.SKIP, result.getName() + " got Skipped");
-        test.log(Status.INFO, result.getThrowable().getMessage());
+        test.assignCategory(result.getMethod().getGroups()); // To display the groups in the report
+        test.log(status, message);
     }
 
 
@@ -96,10 +96,13 @@ public class ExtentReportManager implements ITestListener {
     public void onFinish(ITestContext context) {
         extent.flush();
 // below code is written for opening extent report automatically in the browser after test execution done
-        String pathOfExtentReport = System.getProperty("user.dir") + "\\reports\\" + repName;
+        String pathOfExtentReport = System.getProperty("user.dir") + File.separator + "reports" + File.separator + reportName;
         File extentReport = new File(pathOfExtentReport);
         try {
-            Desktop.getDesktop().browse(extentReport.toURI());
+            Desktop desktop = Desktop.getDesktop();
+            if (desktop.isSupported(Desktop.Action.BROWSE)) {
+                desktop.browse(extentReport.toURI());
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
